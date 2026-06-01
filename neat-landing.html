@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETL No.09 — one bottle, everything clean, cents per use</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:#F2EEE1;
+    --paper-2:#E9E4D2;
+    --ink:#16271C;
+    --ink-soft:#3a4a3f;
+    --lime:#C9F23E;
+    --lime-deep:#A8D425;
+    --forest:#1E4D38;
+    --coral:#E8623A;
+    --water:#3FA9D6;
+    --line:rgba(22,39,28,.16);
+    --shadow:0 1px 0 rgba(22,39,28,.08);
+    --mono:'Space Mono',monospace;
+    --display:'Bricolage Grotesque',sans-serif;
+    --body:'Hanken Grotesk',sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* paper grain */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(242,238,225,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.03em;display:flex;align-items:center;gap:8px}
+  .logo .dot{width:9px;height:9px;background:var(--lime);border:1.5px solid var(--ink);border-radius:50%;display:inline-block}
+  .nav-links{display:flex;gap:30px;align-items:center}
+  .nav-links a{color:var(--ink);text-decoration:none;font-size:.92rem;font-weight:500;opacity:.75;transition:opacity .2s}
+  .nav-links a:hover{opacity:1}
+  .btn{font-family:var(--body);font-weight:600;font-size:.95rem;border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);padding:11px 20px;border-radius:40px;cursor:pointer;text-decoration:none;display:inline-block;transition:transform .15s ease, background .2s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.lime{background:var(--lime);color:var(--ink)}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  @media(max-width:720px){.nav-links a:not(.btn){display:none}}
+
+  /* HERO */
+  header{padding:clamp(48px,9vw,104px) 0 40px;position:relative}
+  .eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--forest);margin-bottom:22px;display:flex;align-items:center;gap:10px;opacity:0;animation:rise .7s .05s forwards}
+  .eyebrow::before{content:"";width:34px;height:1.5px;background:var(--forest)}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(3rem,9.5vw,6.4rem);line-height:.94;letter-spacing:-.045em;max-width:14ch}
+  h1 .strike{position:relative;color:var(--ink-soft)}
+  h1 .strike::after{content:"";position:absolute;left:-2%;right:-2%;top:52%;height:5px;background:var(--coral);transform:scaleX(0);transform-origin:left;animation:strike .6s 1s forwards;border-radius:4px}
+  h1 .hl{color:var(--forest);position:relative;white-space:nowrap}
+  h1 .hl mark{background:linear-gradient(transparent 60%, var(--lime) 60%);color:var(--forest);padding:0 .04em}
+  .hero-line{overflow:hidden}
+  .hero-line span{display:inline-block;transform:translateY(110%);animation:reveal .8s cubic-bezier(.2,.8,.2,1) forwards}
+  .hero-line:nth-child(2) span{animation-delay:.12s}
+  .hero-line:nth-child(3) span{animation-delay:.22s}
+  .sub{font-size:clamp(1.05rem,2.2vw,1.3rem);max-width:46ch;margin-top:30px;color:var(--ink-soft);opacity:0;animation:rise .7s .5s forwards}
+  .hero-cta{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:rise .7s .65s forwards}
+  .hero-note{font-family:var(--mono);font-size:.74rem;margin-top:18px;color:var(--ink-soft);opacity:0;animation:rise .7s .8s forwards}
+
+  @keyframes reveal{to{transform:translateY(0)}}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes strike{to{transform:scaleX(1)}}
+
+  /* DEMO / CALCULATOR */
+  .demo{margin:clamp(40px,7vw,80px) 0}
+  .demo-card{background:var(--ink);color:var(--paper);border-radius:26px;padding:clamp(26px,4vw,48px);position:relative;overflow:hidden}
+  .demo-card::after{content:"";position:absolute;top:-60px;right:-60px;width:240px;height:240px;background:radial-gradient(circle,var(--forest),transparent 70%);opacity:.55}
+  .demo-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;position:relative;z-index:2}
+  .demo-head h2{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4vw,2.6rem);line-height:1;letter-spacing:-.03em;max-width:16ch}
+  .demo-tag{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(201,242,62,.4);padding:7px 13px;border-radius:30px;white-space:nowrap}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin:32px 0 6px;position:relative;z-index:2}
+  .btoggle{display:inline-flex;gap:4px;background:rgba(242,238,225,.1);border:1px solid rgba(242,238,225,.18);padding:4px;border-radius:30px;position:relative;z-index:2}
+  .bt{font-family:var(--mono);font-weight:700;font-size:.8rem;background:transparent;color:var(--paper);border:none;padding:9px 16px;border-radius:24px;cursor:pointer;transition:all .2s;letter-spacing:.03em}
+  .bt.active{background:var(--paper);color:var(--ink)}
+  .chip{font-family:var(--body);font-weight:600;font-size:.9rem;background:transparent;color:var(--paper);border:1.5px solid rgba(242,238,225,.28);padding:10px 16px;border-radius:30px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+  .chip small{font-family:var(--mono);font-size:.66rem;opacity:.6;letter-spacing:.04em}
+  .chip:hover{border-color:var(--lime)}
+  .chip.active{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+  .chip.active small{opacity:.7}
+
+  .meter{margin:30px 0 8px;position:relative;z-index:2}
+  .meter-bar{height:16px;border-radius:20px;background:var(--water);overflow:hidden;display:flex;box-shadow:inset 0 1px 3px rgba(0,0,0,.18)}
+  .meter-conc{background:var(--lime);height:100%;width:20%;transition:width .6s cubic-bezier(.2,.8,.2,1);min-width:3px;border-radius:20px 0 0 20px}
+  #waterLabel{color:#8fd6f0;opacity:.95}
+  .meter-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;margin-top:8px;opacity:.65;letter-spacing:.05em}
+
+  .readout{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(242,238,225,.14);border-radius:18px;overflow:hidden;margin-top:30px;position:relative;z-index:2}
+  .stat{background:var(--ink);padding:22px 18px}
+  .stat .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:10px}
+  .stat .v{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,3.4vw,2.5rem);line-height:1;letter-spacing:-.02em}
+  .stat .v.lime{color:var(--lime)}
+  .stat .u{font-size:.8rem;opacity:.55;font-family:var(--body);font-weight:500;margin-left:3px}
+  @media(max-width:720px){.readout{grid-template-columns:repeat(2,1fr)}}
+
+  .demo-foot{margin-top:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:relative;z-index:2;font-size:.95rem}
+  .demo-foot .vs{font-family:var(--mono);font-size:.8rem;background:rgba(232,98,58,.16);color:#f6a98e;padding:6px 12px;border-radius:20px;border:1px solid rgba(232,98,58,.3)}
+
+  /* SWAP SECTION */
+  section{padding:clamp(54px,8vw,96px) 0}
+  .sec-label{font-family:var(--mono);font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--forest);margin-bottom:18px}
+  .swap-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(30px,5vw,70px);align-items:center}
+  @media(max-width:860px){.swap-grid{grid-template-columns:1fr}}
+  .swap-grid h2{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.4rem);line-height:.98;letter-spacing:-.035em;margin-bottom:20px}
+  .swap-grid p{font-size:1.1rem;color:var(--ink-soft);max-width:42ch}
+  .bottles{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .old-bottle{width:46px;height:96px;background:var(--paper-2);border:1.5px solid var(--line);border-radius:6px 6px 8px 8px;position:relative;opacity:.55;transition:all .4s}
+  .old-bottle::before{content:"";position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:16px;height:11px;background:var(--paper-2);border:1.5px solid var(--line);border-bottom:none;border-radius:3px 3px 0 0}
+  .old-bottle span{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.55rem;opacity:.6}
+  .swap-arrow{font-family:var(--display);font-weight:800;font-size:2rem;color:var(--coral)}
+  .one-bottle{width:74px;height:150px;background:linear-gradient(165deg,var(--forest),#143226);border-radius:9px 9px 12px 12px;position:relative;box-shadow:0 14px 30px rgba(22,39,28,.28)}
+  .one-bottle::before{content:"";position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:26px;height:16px;background:var(--lime);border-radius:4px 4px 0 0}
+  .one-bottle .lab{position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);font-family:var(--display);font-weight:800;color:var(--lime);font-size:1.1rem;letter-spacing:-.02em}
+  .one-bottle .lab small{display:block;font-family:var(--mono);font-size:.5rem;color:var(--paper);opacity:.7;letter-spacing:.1em;margin-top:3px;text-align:center}
+
+  /* PROOF */
+  .proof{background:var(--forest);color:var(--paper);border-radius:26px;padding:clamp(34px,5vw,64px)}
+  .proof .sec-label{color:var(--lime)}
+  .proof h2{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,4.5vw,3rem);line-height:1;letter-spacing:-.03em;margin-bottom:40px;max-width:18ch}
+  .proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(242,238,225,.18);border-radius:18px;overflow:hidden}
+  @media(max-width:720px){.proof-grid{grid-template-columns:1fr}}
+  .pcell{background:var(--forest);padding:30px 26px}
+  .pcell .big{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,5vw,3.4rem);line-height:.9;letter-spacing:-.03em;color:var(--lime)}
+  .pcell .t{margin-top:14px;font-size:1rem;opacity:.85;max-width:24ch}
+  .pcell .src{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;opacity:.55;margin-top:14px}
+
+  /* HOW */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:14px}
+  @media(max-width:720px){.steps{grid-template-columns:1fr}}
+  .step{border-top:2px solid var(--ink);padding-top:18px}
+  .step .n{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em;color:var(--coral)}
+  .step h3{font-family:var(--display);font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin:8px 0}
+  .step p{color:var(--ink-soft)}
+
+  /* EXPLORER */
+  .uc-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+  .uc-head h2{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.4rem);line-height:.98;letter-spacing:-.035em}
+  .uc-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .uc-tab{font-family:var(--body);font-weight:600;font-size:.92rem;background:transparent;border:1.5px solid var(--line);color:var(--ink);padding:9px 16px;border-radius:30px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+  .uc-tab.active{background:var(--forest);color:var(--paper);border-color:var(--forest)}
+  .uc-tab .soon{font-family:var(--mono);font-size:.6rem;opacity:.6;letter-spacing:.08em}
+  .uc-search{width:100%;font-family:var(--body);font-size:1rem;padding:14px 22px;border:1.5px solid var(--line);border-radius:40px;background:var(--paper-2);color:var(--ink);margin-bottom:22px}
+  .uc-search:focus{outline:none;border-color:var(--forest);box-shadow:0 0 0 3px rgba(30,77,56,.12)}
+  .uc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:860px){.uc-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.uc-grid{grid-template-columns:1fr}}
+  .uc-card{background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:22px;transition:transform .2s, box-shadow .2s;animation:rise .4s backwards}
+  .uc-card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(22,39,28,.1)}
+  .uc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:15px}
+  .uc-card h3{font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:-.02em;line-height:1.05}
+  .uc-ratio{font-family:var(--mono);font-size:.7rem;font-weight:700;background:var(--lime);color:var(--ink);padding:5px 9px;border-radius:20px;white-space:nowrap}
+  .uc-card ol{list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:9px}
+  .uc-card li{counter-increment:s;position:relative;padding-left:27px;font-size:.88rem;color:var(--ink-soft);line-height:1.4}
+  .uc-card li::before{content:counter(s);position:absolute;left:0;top:1px;font-family:var(--mono);font-size:.62rem;font-weight:700;width:18px;height:18px;background:var(--forest);color:var(--paper);border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .uc-empty{grid-column:1/-1;text-align:center;padding:54px 20px;color:var(--ink-soft);font-family:var(--mono);font-size:.85rem;line-height:1.7}
+  .uc-count{font-family:var(--mono);font-size:.74rem;color:var(--forest);letter-spacing:.05em}
+
+  /* SHOP */
+  .shop-head{margin-bottom:30px}
+  .shop-head h2{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.4rem);line-height:.98;letter-spacing:-.035em}
+  .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  @media(max-width:980px){.prod-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.prod-grid{grid-template-columns:1fr}}
+  .prod-card{background:var(--paper-2);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;transition:transform .2s, box-shadow .2s}
+  .prod-card:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(22,39,28,.12)}
+  .prod-art{position:relative;background:var(--paper);border-radius:14px;height:190px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;overflow:hidden}
+  .prod-art svg{height:158px;width:auto}
+  .prod-badge{position:absolute;top:12px;left:12px;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.08em;background:var(--coral);color:var(--paper);padding:5px 10px;border-radius:20px;text-transform:uppercase}
+  .prod-cat{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);margin-bottom:7px}
+  .prod-card h3{font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:-.01em;line-height:1.18;margin-bottom:14px;min-height:2.3em}
+  .prod-meta{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:15px;margin-top:auto}
+  .prod-price{font-family:var(--display);font-weight:800;font-size:1.45rem;letter-spacing:-.02em}
+  .prod-unit{font-family:var(--mono);font-size:.62rem;color:var(--ink-soft);text-align:right;letter-spacing:.02em;line-height:1.3}
+  .prod-buy{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#1E4D38;border-color:#1E4D38;color:var(--paper);font-size:.9rem;padding:12px}
+  .prod-buy:hover{background:#16271C}
+  .prod-buy svg{flex-shrink:0}
+  .shop-note{font-family:var(--mono);font-size:.72rem;color:var(--ink-soft);margin-top:24px;letter-spacing:.03em;text-align:center}
+
+  /* INGREDIENTS */
+  .ing-head{text-align:center;margin-bottom:46px}
+  .ing-head .sec-label{margin-bottom:12px}
+  .ing-head h2{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.035em;line-height:1}
+  .ing-head .zh{font-family:var(--body);color:var(--ink-soft);margin-top:10px;font-size:1.15rem;letter-spacing:.1em}
+  .ing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px}
+  @media(max-width:860px){.ing-grid{grid-template-columns:repeat(3,1fr);gap:28px}}
+  @media(max-width:520px){.ing-grid{grid-template-columns:repeat(2,1fr)}}
+  .ing{text-align:center;padding:6px}
+  .ing-icon{width:88px;height:88px;margin:0 auto 16px;background:var(--paper-2);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);transition:transform .25s, background .25s}
+  .ing:hover .ing-icon{transform:translateY(-5px) rotate(-4deg);background:var(--lime)}
+  .ing-icon svg{width:48px;height:48px}
+  .ing h3{font-family:var(--display);font-weight:800;font-size:1.02rem;letter-spacing:-.01em;line-height:1.15}
+  .ing .zh{font-family:var(--body);font-size:.84rem;color:var(--ink-soft);margin-top:3px}
+
+  /* CERTIFICATIONS */
+  .cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:720px){.cert-grid{grid-template-columns:1fr}}
+  .cert{background:rgba(242,238,225,.06);border:1px solid rgba(242,238,225,.18);border-radius:18px;padding:26px;display:flex;gap:20px;align-items:flex-start}
+  .cert-seal{flex-shrink:0;width:74px;height:74px}
+  .cert .ctype{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin-bottom:8px}
+  .cert h3{font-family:var(--display);font-weight:800;font-size:1.12rem;letter-spacing:-.01em;line-height:1.1;margin-bottom:12px}
+  .cert p{font-size:.9rem;opacity:.85;line-height:1.5;margin-bottom:12px}
+  .cert .cno{font-family:var(--mono);font-size:.66rem;opacity:.6;letter-spacing:.03em;line-height:1.6}
+  .cert-note{font-family:var(--mono);font-size:.68rem;opacity:.5;letter-spacing:.04em;margin-top:20px}
+
+  /* CTA */
+  .cta{background:var(--lime);border-radius:26px;padding:clamp(40px,6vw,76px);text-align:center;position:relative;overflow:hidden}
+  .cta h2{font-family:var(--display);font-weight:800;font-size:clamp(2.2rem,6vw,4rem);line-height:.95;letter-spacing:-.04em;max-width:18ch;margin:0 auto 14px}
+  .cta p{font-size:1.15rem;color:var(--ink-soft);max-width:40ch;margin:0 auto 30px}
+  .form{display:flex;gap:10px;max-width:480px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+  .btn.wa{display:inline-flex;align-items:center;gap:11px;background:#1E4D38;color:var(--paper);font-size:1.05rem;padding:16px 28px}
+  .btn.wa svg{flex-shrink:0}
+  .btn.wa:hover{background:#16271C}
+  .cta-note{font-family:var(--mono);font-size:.72rem;margin-top:18px;color:var(--ink-soft);letter-spacing:.04em}
+
+  /* FOOTER */
+  footer{padding:50px 0 70px;border-top:1px solid var(--line);margin-top:clamp(40px,6vw,80px)}
+  /* KIDS CROSS-SELL BAND */
+  .kids-band{background:#C9B8E8;border:2.5px solid var(--ink);border-radius:26px;padding:clamp(26px,4vw,46px);display:flex;gap:30px;align-items:center;box-shadow:6px 6px 0 var(--ink)}
+  @media(max-width:680px){.kids-band{flex-direction:column;text-align:center}}
+  .kids-band .kb-art{flex-shrink:0;width:130px}
+  .kids-band h2{font-family:var(--display);font-weight:800;font-size:clamp(1.8rem,4.5vw,2.8rem);letter-spacing:-.03em;line-height:1;margin:10px 0 12px}
+  .kids-band p{color:var(--ink-soft);max-width:46ch;margin-bottom:20px}
+  @media(max-width:680px){.kids-band p{margin-inline:auto}}
+
+  .foot-in{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+  .foot-in .logo{font-size:1.2rem}
+  .foot-in p{font-family:var(--mono);font-size:.74rem;color:var(--ink-soft);letter-spacing:.04em}
+  .placeholder-tag{position:fixed;bottom:14px;left:14px;z-index:200;font-family:var(--mono);font-size:.62rem;background:var(--ink);color:var(--paper);padding:6px 11px;border-radius:20px;opacity:.85;letter-spacing:.05em}
+
+  /* ===== PLAYFUL / STICKER LAYER ===== */
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes spinslow{to{transform:rotate(360deg)}}
+  @keyframes marquee{to{transform:translateX(-50%)}}
+
+  /* section labels become stickers */
+  .sec-label{display:inline-block;color:var(--ink)!important;background:var(--lime);border:2px solid var(--ink);border-radius:11px;padding:6px 13px;box-shadow:2px 2px 0 var(--ink);transform:rotate(-2deg)}
+
+  /* chunky playful primary buttons */
+  .btn.lime{box-shadow:3px 3px 0 var(--ink)}
+  .btn.lime:hover{transform:translate(-1px,-2px);box-shadow:4px 5px 0 var(--ink)}
+  .btn.lime:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink)}
+
+  /* stickers */
+  .sticker{position:absolute;font-family:var(--display);font-weight:800;font-size:.82rem;padding:9px 14px;border-radius:14px;border:2px solid var(--ink);background:var(--lime);color:var(--ink);box-shadow:3px 3px 0 var(--ink);z-index:6;white-space:nowrap;line-height:1.08;text-align:center}
+  .sticker.blue{background:var(--water)}
+  .sticker.coral{background:var(--coral);color:var(--paper)}
+  .sticker.lilac{background:#C9B8E8}
+  .sticker.round{border-radius:50%;width:88px;height:88px;display:flex;align-items:center;justify-content:center;font-size:.74rem;padding:6px;white-space:normal}
+  .sticker.spin{animation:spinslow 16s linear infinite}
+  .spark{position:absolute;color:var(--lime);font-size:1.6rem;z-index:4;pointer-events:none;animation:floaty 5s ease-in-out infinite}
+
+  /* marquee strip */
+  .marquee{background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap;padding:13px 0;margin-top:6px;transform:rotate(-1deg) scale(1.03)}
+  .marquee-track{display:inline-block;animation:marquee 24s linear infinite;font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:.01em}
+  .marquee-track span{padding:0 10px}
+  .marquee-track .star{color:var(--lime)}
+
+  /* playful card tilts */
+  .prod-card:nth-child(odd){transform:rotate(-1.2deg)}
+  .prod-card:nth-child(even){transform:rotate(1.2deg)}
+  .prod-card:hover{transform:translateY(-5px) rotate(0deg)}
+
+  @media(max-width:720px){.sticker,.spark{display:none}}
+
+  /* ORDER MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(13,18,15,.62);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:18px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--paper);border-radius:22px;max-width:780px;width:100%;max-height:94vh;overflow:auto;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  .modal-grid{display:grid;grid-template-columns:1.05fr .95fr}
+  @media(max-width:640px){.modal-grid{grid-template-columns:1fr}}
+  .modal-form{padding:clamp(22px,3vw,32px)}
+  .modal-form h3{font-family:var(--display);font-weight:800;font-size:1.4rem;letter-spacing:-.02em;margin-bottom:4px}
+  .modal-form .msub{font-size:.85rem;color:var(--ink-soft);margin-bottom:20px}
+  .mf{margin-bottom:14px}
+  .mf label{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--forest);margin-bottom:6px}
+  .mf input,.mf select,.mf textarea{width:100%;font-family:var(--body);font-size:.95rem;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--paper-2);color:var(--ink)}
+  .mf textarea{resize:vertical;min-height:54px}
+  .mf input:focus,.mf select:focus,.mf textarea:focus{outline:none;border-color:var(--forest)}
+  .mf-row{display:flex;gap:12px}
+  .mf-row .mf{flex:1}
+  .mtotal{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+  .mtotal .ml{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .mtotal .mv{font-family:var(--display);font-weight:800;font-size:1.7rem;letter-spacing:-.02em}
+  .modal-form .btn{width:100%;margin-top:18px;display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#1E4D38;border-color:#1E4D38;color:var(--paper)}
+  .modal-form .btn:hover{background:#16271C}
+  .modal-pay{padding:clamp(22px,3vw,32px);background:var(--ink);color:var(--paper);border-radius:0 22px 22px 0;display:flex;flex-direction:column;align-items:center;text-align:center}
+  @media(max-width:640px){.modal-pay{border-radius:0 0 22px 22px}}
+  .modal-pay .pk{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin-bottom:16px}
+  .qr-card{background:#fff;padding:14px;border-radius:14px;line-height:0}
+  .modal-pay .payamt{font-family:var(--display);font-weight:800;font-size:1.5rem;margin-top:16px;letter-spacing:-.02em}
+  .modal-pay .payref{font-family:var(--mono);font-size:.66rem;opacity:.6;margin-top:4px;letter-spacing:.05em}
+  .modal-pay .paysteps{font-size:.8rem;opacity:.8;line-height:1.6;margin-top:18px;text-align:left}
+  .modal-pay .paysteps b{color:var(--lime);font-weight:700}
+  .modal-close{position:absolute;top:12px;right:14px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(13,18,15,.08);color:var(--ink);font-size:1.1rem;cursor:pointer;z-index:2;line-height:1}
+  .modal-close:hover{background:rgba(13,18,15,.16)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="logo">ETL No.09<span class="dot"></span></div>
+    <div class="nav-links">
+      <a href="#demo">The math</a>
+      <a href="#jobs">Every job</a>
+      <a href="#shop">Shop</a>
+      <a href="foomi-mini.html">Kids</a>
+      <a href="#proof">Proof</a>
+      <a href="#how">How</a>
+      <a href="#get" class="btn lime">Claim a demo bottle</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">One bottle · Everything clean · Cents per use</div>
+    <h1>
+      <span class="hero-line"><span>Stop paying</span></span><br>
+      <span class="hero-line"><span>for <span class="strike">water</span>.</span></span><br>
+      <span class="hero-line"><span><span class="hl"><mark>Pay for clean.</mark></span></span></span>
+    </h1>
+    <p class="sub">Most cleaners are ~90% water you ship home, store under your sink, and pay full price for. ETL No.09 is the concentrate — one bottle that replaces six, for as little as cents a litre.</p>
+    <div class="hero-cta">
+      <a href="#demo" class="btn">Do the math →</a>
+      <a href="#get" class="btn ghost">Try a demo bottle</a>
+    </div>
+    <div class="hero-note">// drag through the uses below — watch the price drop in real time</div>
+  </div>
+  <span class="sticker round spin" style="top:84px;right:6%;">100%<br>plant-<br>based ✦</span>
+  <span class="sticker coral" style="top:262px;right:13%;transform:rotate(6deg);">cents per litre</span>
+  <span class="sticker blue" style="top:344px;right:6%;transform:rotate(-5deg);">certified ✓</span>
+  <span class="spark" style="top:60px;right:25%;">✦</span>
+  <span class="spark" style="top:312px;right:23%;font-size:1.1rem;">✧</span>
+</header>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>one bottle · 800 sprays</span><span class="star">✦</span><span>plant-based &amp; certified</span><span class="star">✦</span><span>cents per litre</span><span class="star">✦</span><span>replaces 6 cleaners</span><span class="star">✦</span><span>one bottle · 800 sprays</span><span class="star">✦</span><span>plant-based &amp; certified</span><span class="star">✦</span><span>cents per litre</span><span class="star">✦</span><span>replaces 6 cleaners</span><span class="star">✦</span>
+  </div>
+</div>
+
+<div class="wrap demo" id="demo">
+  <div class="demo-card">
+    <span class="sticker lilac" style="top:-15px;left:26px;transform:rotate(-5deg);">try me ↓</span>
+    <div class="demo-head">
+      <h2>One bottle of ETL No.09.<br>What does it <em>actually</em> cost?</h2>
+      <div class="demo-tag">Live dilution demo</div>
+    </div>
+
+    <div class="btoggle" id="btoggle"></div>
+
+    <div class="chips" id="chips"></div>
+
+    <div class="meter">
+      <div class="meter-bar"><div class="meter-conc" id="meterConc"></div></div>
+      <div class="meter-labels"><span id="ratioLabel">5 ml ETL No.09</span><span id="waterLabel">+ 250 ml water</span></div>
+    </div>
+
+    <div class="readout">
+      <div class="stat"><div class="k">Spray bottles</div><div class="v lime"><span id="vBottles">800</span><span class="u">× <span id="vSize">255</span>ml</span></div></div>
+      <div class="stat"><div class="k">Usable cleaner</div><div class="v"><span id="vLitres">204</span><span class="u">litres</span></div></div>
+      <div class="stat"><div class="k">Cost / spray bottle</div><div class="v">S$<span id="vPerSpray">0.19</span></div></div>
+      <div class="stat"><div class="k">Cost / litre</div><div class="v">S$<span id="vPerL">0.74</span></div></div>
+    </div>
+
+    <div class="demo-foot">
+      <span class="vs">vs ~S$10/L store-bought spray</span>
+      <span style="opacity:.8">That's <strong id="vSaving">14×</strong> cheaper, litre for litre — same job, less plastic, fewer trips.</span>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="swap-grid">
+      <div>
+        <div class="sec-label">The under-sink swap</div>
+        <h2>Six bottles in.<br>One bottle out.</h2>
+        <p>Glass, floors, dishes, bathroom, kitchen, toys, even your fruit and veg — all one concentrate, diluted to suit. Actually, it's not six jobs. It's fifteen. Scroll on and try them →</p>
+      </div>
+      <div class="bottles">
+        <div class="old-bottle"><span>GLASS</span></div>
+        <div class="old-bottle"><span>FLOOR</span></div>
+        <div class="old-bottle"><span>DISH</span></div>
+        <div class="old-bottle"><span>BATH</span></div>
+        <div class="old-bottle"><span>MULTI</span></div>
+        <div class="old-bottle"><span>DEGREASE</span></div>
+        <div class="swap-arrow">→</div>
+        <div class="one-bottle"><div class="lab">ETL<small>No.09</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="explorer" id="jobs">
+  <div class="wrap">
+    <div class="uc-head">
+      <div>
+        <div class="sec-label">One bottle · every job</div>
+        <h2>Not six jobs.<br><span id="jobTotal">15</span> and counting.</h2>
+      </div>
+      <div class="uc-count" id="ucCount"></div>
+    </div>
+    <div class="uc-tabs" id="ucTabs"></div>
+    <input class="uc-search" id="ucSearch" placeholder="Type what you want to clean — &ldquo;stove&rdquo;, &ldquo;dog&rdquo;, &ldquo;floor&rdquo;&hellip;">
+    <div class="uc-grid" id="ucGrid"></div>
+  </div>
+</section>
+
+<section id="ingredients">
+  <div class="wrap">
+    <div class="ing-head">
+      <div class="sec-label">Healthy key ingredients</div>
+      <h2>Five ingredients. Nothing hidden.</h2>
+      <div class="zh">健康配方</div>
+    </div>
+    <div class="ing-grid">
+
+      <div class="ing">
+        <div class="ing-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="var(--forest)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 31 L18 42 H30 L32 31 Z"/>
+            <path d="M24 31 C20 28 16 26 13 18 C19 19 23 23 24 28"/>
+            <path d="M24 31 C28 28 32 26 35 18 C29 19 25 23 24 28"/>
+            <path d="M24 28 C22 22 22 14 24 8 C26 14 26 22 24 28"/>
+          </svg>
+        </div>
+        <h3>Aloe Vera</h3><div class="zh">芦荟</div>
+      </div>
+
+      <div class="ing">
+        <div class="ing-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="var(--forest)" stroke-width="2.2" stroke-linejoin="round">
+            <circle cx="24" cy="24" r="16"/>
+            <rect x="15" y="17" width="8" height="8" rx="1.5"/>
+            <rect x="25" y="21" width="6.5" height="6.5" rx="1.5"/>
+            <rect x="19" y="27" width="6.5" height="6.5" rx="1.5"/>
+          </svg>
+        </div>
+        <h3>Mineral Salt</h3><div class="zh">矿物盐</div>
+      </div>
+
+      <div class="ing">
+        <div class="ing-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="var(--forest)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="24" cy="17" r="6"/>
+            <path d="M24 5 V9 M24 25 V29 M14 11 L17 14 M34 11 L31 14 M11 17 H15 M37 17 H33 M14 23 L17 20 M34 23 L31 20"/>
+            <path d="M24 29 V42"/>
+            <path d="M24 36 C20 34 17 36 15 33"/>
+          </svg>
+        </div>
+        <h3>Sunflower Oil</h3><div class="zh">葵花仔油</div>
+      </div>
+
+      <div class="ing">
+        <div class="ing-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="var(--forest)" stroke-width="2.2" stroke-linejoin="round">
+            <circle cx="24" cy="24" r="15"/>
+            <path d="M24 9 a15 15 0 0 1 0 30"/>
+            <circle cx="20" cy="22" r="1.4" fill="var(--forest)" stroke="none"/>
+            <circle cx="24" cy="27" r="1.4" fill="var(--forest)" stroke="none"/>
+            <circle cx="28" cy="22" r="1.4" fill="var(--forest)" stroke="none"/>
+          </svg>
+        </div>
+        <h3>Coconut Oil</h3><div class="zh">椰子油</div>
+      </div>
+
+      <div class="ing">
+        <div class="ing-icon">
+          <svg viewBox="0 0 48 48" fill="none" stroke="var(--forest)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="23" cy="27" rx="14" ry="11"/>
+            <path d="M33 19 q5 -6 9 -3 q-1 6 -7 5"/>
+            <circle cx="19" cy="26" r="1.4" fill="var(--forest)" stroke="none"/>
+            <circle cx="24" cy="29" r="1.4" fill="var(--forest)" stroke="none"/>
+            <circle cx="27" cy="24" r="1.4" fill="var(--forest)" stroke="none"/>
+          </svg>
+        </div>
+        <h3>Lemon Essential Oil</h3><div class="zh">柠檬精油</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="wrap" id="proof">
+  <div class="proof">
+    <div class="sec-label">Certified, not just claimed</div>
+    <h2>Independently tested. Numbers you can look up.</h2>
+    <div class="cert-grid">
+
+      <div class="cert">
+        <svg class="cert-seal" viewBox="0 0 80 80" fill="none">
+          <circle cx="40" cy="40" r="36" stroke="var(--lime)" stroke-width="1.5" stroke-dasharray="2.5 3.5"/>
+          <circle cx="40" cy="40" r="29" fill="rgba(201,242,62,.1)" stroke="var(--lime)" stroke-width="2"/>
+          <path d="M40 52 C33 46 33 32 40 25 C47 32 47 46 40 52 Z" fill="var(--lime)"/>
+          <path d="M40 52 V30" stroke="var(--forest)" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="ctype">Natural &amp; Organic</div>
+          <h3>ZhongHua Certification (ZHCERT)</h3>
+          <p>Confirmation for materials used in an organic product — inspected and found in conformity with the Chinese Organic Agriculture Enforcing Standard.</p>
+          <div class="cno">Certificate No. CA-15COAS001</div>
+        </div>
+      </div>
+
+      <div class="cert">
+        <svg class="cert-seal" viewBox="0 0 80 80" fill="none">
+          <rect x="11" y="24" width="58" height="32" rx="5" stroke="var(--lime)" stroke-width="2"/>
+          <text x="38" y="47" text-anchor="middle" font-family="'Bricolage Grotesque',sans-serif" font-size="19" font-weight="800" fill="var(--lime)">SGS</text>
+          <line x1="57" y1="20" x2="57" y2="48" stroke="var(--lime)" stroke-width="1.6"/>
+        </svg>
+        <div>
+          <div class="ctype">Ultra-Trace Industrial Safety Hygiene</div>
+          <h3>SGS Taiwan Ltd</h3>
+          <p>Tested safe and free from chemical substances, in accordance with the SGS Taiwan Ultra-Trace Industrial Safety Hygiene test report.</p>
+          <div class="cno">Test Report No. UG/2016/C0023A-03<br>Test Report No. UG/2016/C0022A-03</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="cert-note">// official certificates available on request — drop in the issuer logo files when print-ready</div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-label">Dilute. Done.</div>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><h3>Pick the job</h3><p>Dishes, surfaces, floors, produce — each has a simple ratio on the bottle.</p></div>
+      <div class="step"><div class="n">02</div><h3>Add water</h3><p>A splash of ETL No.09, top up your spray bottle. One pump can make 10 litres.</p></div>
+      <div class="step"><div class="n">03</div><h3>Clean everything</h3><p>One bottle lasts months. Refill, repeat, stop buying five other cleaners.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="shop">
+  <div class="wrap">
+    <div class="shop-head">
+      <div class="sec-label">Shop the range</div>
+      <h2>Pick your bottle.</h2>
+    </div>
+    <div class="prod-grid">
+
+      <div class="prod-card">
+        <div class="prod-art">
+          <svg viewBox="0 0 120 172" xmlns="http://www.w3.org/2000/svg">
+            <rect x="48" y="6" width="10" height="26" rx="3" fill="var(--forest)"/>
+            <path d="M44 14 h18 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 h-18 z" fill="#C9B8E8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="62" y="18" width="16" height="6" rx="3" fill="#C9B8E8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="50" y="30" width="20" height="12" fill="#E9D27A" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="28" y="40" width="64" height="124" rx="12" fill="#E9D27A" stroke="var(--forest)" stroke-width="3"/>
+            <rect x="34" y="78" width="52" height="62" rx="6" fill="#F4ECC9" stroke="var(--forest)" stroke-width="2"/>
+            <text x="60" y="102" text-anchor="middle" font-family="monospace" font-size="11" font-weight="700" fill="var(--forest)">ETL</text>
+            <text x="60" y="122" text-anchor="middle" font-family="monospace" font-size="13" font-weight="700" fill="var(--forest)">No.7</text>
+          </svg>
+        </div>
+        <div class="prod-cat">ETL No.7</div>
+        <h3>Hair &amp; Body — Dry &amp; Sensitive Skin</h3>
+        <div class="prod-meta"><span class="prod-price">S$60.00</span><span class="prod-unit">certified<br>organic</span></div>
+        <button class="prod-buy" data-product="ETL No.7 Hair &amp; Body Dry &amp; Sensitive Skin (S$60)">Order on WhatsApp</button>
+      </div>
+
+      <div class="prod-card">
+        <div class="prod-art">
+          <svg viewBox="0 0 120 172" xmlns="http://www.w3.org/2000/svg">
+            <rect x="48" y="6" width="10" height="26" rx="3" fill="var(--forest)"/>
+            <path d="M44 14 h18 a4 4 0 0 1 4 4 v6 a4 4 0 0 1 -4 4 h-18 z" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="62" y="18" width="16" height="6" rx="3" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="50" y="30" width="20" height="12" fill="#ECEADF" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="28" y="40" width="64" height="124" rx="12" fill="#ECEADF" stroke="var(--forest)" stroke-width="3"/>
+            <text x="60" y="84" text-anchor="middle" font-family="monospace" font-size="7.5" font-weight="700" fill="var(--forest)">ALL-PURPOSE</text>
+            <circle cx="60" cy="108" r="24" fill="none" stroke="var(--forest)" stroke-width="2.5"/>
+            <circle cx="60" cy="108" r="9" fill="var(--lime)"/>
+            <text x="60" y="142" text-anchor="middle" font-family="monospace" font-size="9" font-weight="700" fill="var(--forest)">No.9 · 1L</text>
+          </svg>
+        </div>
+        <div class="prod-cat">ETL No.9</div>
+        <h3>All Purpose Green Cleaning Formula 1000ml</h3>
+        <div class="prod-meta"><span class="prod-price">S$54.00</span><span class="prod-unit">S$54.00<br>/ litre</span></div>
+        <button class="prod-buy" data-product="ETL No.9 All Purpose Green Cleaning Formula 1000ml (S$54)">Order on WhatsApp</button>
+      </div>
+
+      <div class="prod-card">
+        <div class="prod-art">
+          <span class="prod-badge">Best value</span>
+          <svg viewBox="0 0 140 172" xmlns="http://www.w3.org/2000/svg">
+            <rect x="58" y="4" width="10" height="24" rx="3" fill="var(--forest)"/>
+            <rect x="50" y="12" width="26" height="12" rx="3" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="60" y="26" width="18" height="10" fill="#ECEADF" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="20" y="38" width="96" height="126" rx="14" fill="#ECEADF" stroke="var(--forest)" stroke-width="3"/>
+            <path d="M112 40 q22 0 22 22 v8 q0 14 -16 14" fill="none" stroke="var(--forest)" stroke-width="3" stroke-linecap="round"/>
+            <rect x="36" y="80" width="64" height="60" rx="6" fill="#F2F0E6" stroke="var(--forest)" stroke-width="2"/>
+            <circle cx="68" cy="102" r="13" fill="none" stroke="var(--forest)" stroke-width="2"/>
+            <circle cx="68" cy="102" r="5" fill="var(--lime)"/>
+            <text x="68" y="132" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="var(--forest)">No.9 · 4L</text>
+          </svg>
+        </div>
+        <div class="prod-cat">ETL No.9</div>
+        <h3>All Purpose Green Cleaning Formula 4000ml</h3>
+        <div class="prod-meta"><span class="prod-price">S$150.00</span><span class="prod-unit">S$37.50<br>/ litre</span></div>
+        <button class="prod-buy" data-product="ETL No.9 All Purpose Green Cleaning Formula 4000ml (S$150)">Order on WhatsApp</button>
+      </div>
+
+      <div class="prod-card">
+        <div class="prod-art">
+          <svg viewBox="0 0 130 172" xmlns="http://www.w3.org/2000/svg">
+            <path d="M40 40 L40 22 L16 28 L16 40 Z" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2.5" stroke-linejoin="round"/>
+            <rect x="6" y="28" width="12" height="6" rx="2" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2"/>
+            <path d="M34 40 q-7 9 -4 20" fill="none" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="38" y="38" width="24" height="14" rx="3" fill="#DFE0D8" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="46" y="52" width="14" height="8" fill="rgba(30,77,56,.06)" stroke="var(--forest)" stroke-width="2.5"/>
+            <rect x="34" y="60" width="46" height="104" rx="10" fill="rgba(30,77,56,.05)" stroke="var(--forest)" stroke-width="3"/>
+            <circle cx="57" cy="116" r="11" fill="none" stroke="var(--forest)" stroke-width="2"/>
+            <circle cx="57" cy="116" r="4" fill="var(--lime)"/>
+            <text x="57" y="146" text-anchor="middle" font-family="monospace" font-size="8" font-weight="700" fill="var(--forest)">No.9</text>
+          </svg>
+        </div>
+        <div class="prod-cat">ETL No.9</div>
+        <h3>Empty Spray Bottle 500ml</h3>
+        <div class="prod-meta"><span class="prod-price">S$6.50</span><span class="prod-unit">reusable<br>glass</span></div>
+        <button class="prod-buy" data-product="ETL No.9 Empty Spray Bottle 500ml (S$6.50)">Order on WhatsApp</button>
+      </div>
+
+    </div>
+    <div class="shop-note">// tap any product to order on WhatsApp · one bottle dilutes into months of cleaner</div>
+  </div>
+</section>
+
+<div class="wrap" id="get">
+  <div class="cta">
+    <span class="sticker" style="top:18px;right:22px;transform:rotate(8deg);background:var(--paper);">no nasties ✦</span>
+    <h2>Try the math at home.</h2>
+    <p>Claim a demo bottle. Dilute it, clean something gross, watch how long it lasts. Then tell us we're wrong.</p>
+    <div class="form" id="form">
+      <a class="btn wa" id="waBtn" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.978-1.044zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        Claim your demo bottle on WhatsApp
+      </a>
+    </div>
+    <div class="cta-note">// chats straight to us · S$0 to try · reply within the day</div>
+  </div>
+</div>
+
+<div class="modal-bg" id="orderModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOrder()" aria-label="Close">&times;</button>
+    <div class="modal-grid">
+      <div class="modal-form">
+        <h3>Place your order</h3>
+        <div class="msub">Pay by PayNow, then send it over on WhatsApp — we'll confirm and arrange delivery.</div>
+        <div class="mf">
+          <label>Product</label>
+          <select id="oProduct" onchange="refreshOrder()"></select>
+        </div>
+        <div class="mf-row">
+          <div class="mf"><label>Quantity</label><input type="number" id="oQty" min="1" value="1" oninput="refreshOrder()"></div>
+          <div class="mf"><label>Your name</label><input type="text" id="oName" placeholder="Full name"></div>
+        </div>
+        <div class="mf"><label>Phone</label><input type="tel" id="oPhone" placeholder="e.g. 9123 4567"></div>
+        <div class="mf"><label>Delivery address</label><textarea id="oAddr" placeholder="Block, unit, postal code"></textarea></div>
+        <div class="mtotal"><span class="ml">Total</span><span class="mv" id="oTotal">S$54.00</span></div>
+        <button class="btn" id="oSend" onclick="submitOrder()">Send order on WhatsApp</button>
+      </div>
+      <div class="modal-pay">
+        <div class="pk">Scan to pay · PayNow</div>
+        <div class="qr-card"><div id="payQR"></div></div>
+        <div class="payamt" id="payAmt">SGD 54.00</div>
+        <div class="payref">Ref: <span id="payRef">—</span></div>
+        <div class="paysteps">
+          <b>1.</b> Scan with any SG banking app<br>
+          <b>2.</b> Pay the exact amount &amp; reference<br>
+          <b>3.</b> Tap “Send order” &amp; attach your screenshot
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<iframe name="order_log_sink" style="display:none" title="order log"></iframe>
+
+<div class="wrap" id="kids">
+  <div class="kids-band">
+    <svg class="kb-art" viewBox="0 0 118 158" xmlns="http://www.w3.org/2000/svg">
+      <g stroke="#16271C" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+        <circle cx="14" cy="22" r="5" fill="#C9F23E" stroke-width="2.6"/>
+        <circle cx="3" cy="13" r="3.5" fill="#C9F23E" stroke-width="2.6"/>
+        <circle cx="20" cy="7" r="3" fill="#C9F23E" stroke-width="2.6"/>
+        <path d="M50 43 q-12 3 -11 23" fill="none" stroke-width="5"/>
+        <rect x="18" y="22" width="25" height="13" rx="6" fill="#F2EEE1"/>
+        <rect x="40" y="13" width="55" height="31" rx="12" fill="#F2EEE1"/>
+        <rect x="54" y="40" width="28" height="18" fill="#F2EEE1"/>
+        <rect x="20" y="54" width="90" height="98" rx="24" fill="#C9F23E"/>
+        <circle cx="44" cy="110" r="5" fill="#E8623A" opacity=".5" stroke="none"/>
+        <circle cx="90" cy="110" r="5" fill="#E8623A" opacity=".5" stroke="none"/>
+        <circle cx="52" cy="98" r="5.5" fill="#16271C" stroke="none"/>
+        <circle cx="78" cy="98" r="5.5" fill="#16271C" stroke="none"/>
+        <path d="M52 112 q13 15 28 0" fill="none" stroke-width="4.5"/>
+      </g>
+    </svg>
+    <div>
+      <span class="sec-label">New · for little hands</span>
+      <h2>Meet Foomi Mini.</h2>
+      <p>A kid-sized spray bottle and a gentle, certified-safe formula — so your little one gets their own cleaning job, safely. Same Foomi, pint-sized.</p>
+      <a href="foomi-mini.html" class="btn lime">Visit Foomi Mini →</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot-in">
+    <div class="logo">ETL No.09<span class="dot"></span></div>
+    <p>One bottle. Everything clean. Cents per use.</p>
+    <p>© 2026 · Singapore</p>
+  </div>
+</footer>
+
+<div class="placeholder-tag">concept landing page · demo</div>
+
+<script>
+  // Real per-spray-bottle recipes from the ETL No.9 dilution chart
+  // conc = ml of concentrate per bottle, water = ml of water per bottle
+  const STORE_PER_L = 10;  // ~S$5 per 500ml ready-to-use spray = S$10/litre
+  const uses = [
+    {name:"Degrease", ratio:"1:4",    conc:50, water:200,   sub:"tough grease"},
+    {name:"Dishes",   ratio:"1:7",    conc:50, water:350,   sub:"washing up"},
+    {name:"Surfaces", ratio:"1:10",   conc:40, water:400,   sub:"counters"},
+    {name:"Light",    ratio:"1:30",   conc:10, water:300,   sub:"toys, glass"},
+    {name:"Daily",    ratio:"1:50",   conc:5,  water:250,   sub:"wipe down"},
+    {name:"Produce",  ratio:"1:500",  conc:5,  water:2500,  sub:"fruit & veg"},
+    {name:"Ultra",    ratio:"3:10000",conc:3,  water:10000, sub:"garden / rinse"},
+  ];
+  const BOTTLES = [
+    {ml:1000, price:54,  label:"1 L · S$54"},
+    {ml:4000, price:150, label:"4 L · S$150"},
+  ];
+
+  let active = 4;  // default "Daily" 1:50
+  let bottle = 1;  // default 4 L
+
+  const chips = document.getElementById('chips');
+  uses.forEach((u,i)=>{
+    const b = document.createElement('button');
+    b.className = 'chip'+(i===active?' active':'');
+    b.innerHTML = u.name+'<small>'+u.ratio+' · '+u.sub+'</small>';
+    b.onclick = ()=>select(i);
+    chips.appendChild(b);
+  });
+
+  const btog = document.getElementById('btoggle');
+  BOTTLES.forEach((b,i)=>{
+    const el = document.createElement('button');
+    el.className = 'bt'+(i===bottle?' active':'');
+    el.textContent = b.label;
+    el.onclick = ()=>{ bottle=i; document.querySelectorAll('.bt').forEach((x,idx)=>x.classList.toggle('active',idx===i)); select(active); };
+    btog.appendChild(el);
+  });
+
+  function animateVal(el, to, decimals){
+    const from = parseFloat(el.textContent.replace(/,/g,'')) || 0;
+    const dur = 550, start = performance.now();
+    function frame(now){
+      const p = Math.min((now-start)/dur,1);
+      const e = 1-Math.pow(1-p,3);
+      const val = from+(to-from)*e;
+      el.textContent = (decimals? val.toFixed(decimals) : Math.round(val)).toLocaleString();
+      if(p<1) requestAnimationFrame(frame);
+      else el.textContent = (decimals? to.toFixed(decimals) : Math.round(to)).toLocaleString();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function select(i){
+    active = i;
+    document.querySelectorAll('.chip').forEach((c,idx)=>c.classList.toggle('active',idx===i));
+    const u = uses[i], B = BOTTLES[bottle];
+    const size    = u.conc + u.water;        // ml per spray bottle
+    const bottles = B.ml / u.conc;           // bottles from this concentrate bottle
+    const usableL = bottles * size / 1000;   // litres of usable cleaner
+    const perBottle = B.price / bottles;     // cost per made spray bottle
+    const perL    = B.price / usableL;       // cost per litre of cleaner
+    const saving  = STORE_PER_L / perL;
+
+    animateVal(document.getElementById('vBottles'), bottles, 0);
+    document.getElementById('vSize').textContent = size.toLocaleString();
+    animateVal(document.getElementById('vLitres'), usableL, usableL<100?1:0);
+    animateVal(document.getElementById('vPerSpray'), perBottle, perBottle<1?3:2);
+    animateVal(document.getElementById('vPerL'), perL, perL<1?3:2);
+    document.getElementById('vSaving').textContent = (saving<10? saving.toFixed(1) : Math.round(saving))+'×';
+
+    // meter: concentrate share of the spray bottle
+    const concPct = Math.max(1.2, u.conc/size*100);
+    document.getElementById('meterConc').style.width = concPct+'%';
+    const waterTxt = u.water>=1000 ? (u.water/1000)+' L' : u.water+' ml';
+    document.getElementById('ratioLabel').textContent = u.conc+' ml ETL No.09';
+    document.getElementById('waterLabel').textContent = '+ '+waterTxt+' water';
+  }
+
+  select(active);
+
+  // --- WhatsApp click-to-chat ---  EDIT THESE TWO LINES ---
+  const WA_NUMBER = "6591234567"; // your number, country code + no symbols (Singapore = 65)
+  const WA_MESSAGE = "Hi! I'd like to claim a demo bottle of ETL No.09 — saw the dilution calculator on your site.";
+  document.getElementById('waBtn').href =
+    "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(WA_MESSAGE);
+
+  // Product "Order on WhatsApp" buttons
+  const WA_ICON = '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.978-1.044zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>';
+  document.querySelectorAll('.prod-buy').forEach((b,i)=>{
+    b.insertAdjacentHTML('afterbegin', WA_ICON + ' ');
+    b.addEventListener('click', ()=> openOrder(i));
+  });
+
+  // ===== ORDER + PAYNOW + LOG =====
+  const PRODUCTS = [
+    {name:"ETL No.7 Hair & Body — Dry & Sensitive Skin", price:60},
+    {name:"ETL No.9 All Purpose Green Cleaning Formula 1000ml", price:54},
+    {name:"ETL No.9 All Purpose Green Cleaning Formula 4000ml", price:150},
+    {name:"ETL No.9 Empty Spray Bottle 500ml", price:6.5},
+  ];
+  // --- PAYNOW PAYEE (edit these) ---  proxyType: "2"=UEN, "0"=mobile
+  const PAYNOW = { proxyType:"2", proxyValue:"201912345A", name:"ETL NO.09 SG" };
+  // --- ORDER LOG (optional): paste your Google Form POST url + entry ids; leave action "" to skip ---
+  const FORM = { action:"", fields:{ ref:"entry.1111", product:"entry.2222", qty:"entry.3333", name:"entry.4444", phone:"entry.5555", address:"entry.6666", amount:"entry.7777" } };
+  // =================================
+
+  // --- PayNow SGQR generator (from the PayNow/WooCommerce build) ---
+  function crc16(s){ let c=0xFFFF; for(let i=0;i<s.length;i++){ c^=s.charCodeAt(i)<<8; for(let j=0;j<8;j++){ c=(c&0x8000)?((c<<1)^0x1021):(c<<1); c&=0xFFFF; } } return c.toString(16).toUpperCase().padStart(4,"0"); }
+  function f(id,val){ return id + String(val.length).padStart(2,"0") + val; }
+  function buildPayNow({proxyType, proxyValue, amount, editable, name, ref}){
+    const proxy = proxyType==="0" ? "+65"+proxyValue.replace(/^\+?65/,"").replace(/\s/g,"") : proxyValue;
+    const merchant = f("00","SG.PAYNOW") + f("01",proxyType) + f("02",proxy) + f("03", editable?"1":"0");
+    let s = f("00","01") + f("01","12") + f("26",merchant) + f("52","0000") + f("53","702")
+          + (amount>0 ? f("54", Number(amount).toFixed(2)) : "") + f("58","SG")
+          + f("59",(name||"NA").slice(0,25)) + f("60","Singapore")
+          + (ref ? f("62", f("01", ref.slice(0,25))) : "");
+    s += "6304";
+    return s + crc16(s);
+  }
+
+  // --- modal wiring ---
+  const selEl = document.getElementById('oProduct');
+  PRODUCTS.forEach((p,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=p.name+" — S$"+p.price.toFixed(2); selEl.appendChild(o); });
+  let curRef = '';
+  const qrInst = (typeof QRCode!=='undefined') ? new QRCode(document.getElementById('payQR'),{width:172,height:172,correctLevel:QRCode.CorrectLevel.M}) : null;
+
+  function openOrder(i){
+    selEl.value = i;
+    document.getElementById('oQty').value = 1;
+    curRef = 'ETL' + Date.now().toString().slice(-6);
+    refreshOrder();
+    document.getElementById('orderModal').classList.add('open');
+  }
+  function closeOrder(){ document.getElementById('orderModal').classList.remove('open'); }
+  function orderTotal(){ const i=+selEl.value; const qty=Math.max(1,parseInt(document.getElementById('oQty').value)||1); return PRODUCTS[i].price*qty; }
+  function refreshOrder(){
+    const total = orderTotal();
+    document.getElementById('oTotal').textContent = 'S$'+total.toFixed(2);
+    document.getElementById('payAmt').textContent = 'SGD '+total.toFixed(2);
+    document.getElementById('payRef').textContent = curRef;
+    if(qrInst){ qrInst.clear(); qrInst.makeCode(buildPayNow({proxyType:PAYNOW.proxyType,proxyValue:PAYNOW.proxyValue,amount:total,editable:false,name:PAYNOW.name,ref:curRef})); }
+  }
+  function logOrder(data){
+    if(!FORM.action) return;
+    const fm=document.createElement('form'); fm.action=FORM.action; fm.method='POST'; fm.target='order_log_sink'; fm.style.display='none';
+    for(const k in FORM.fields){ if(data[k]!=null){ const inp=document.createElement('input'); inp.name=FORM.fields[k]; inp.value=data[k]; fm.appendChild(inp); } }
+    document.body.appendChild(fm); try{ fm.submit(); }catch(e){} setTimeout(()=>fm.remove(),1200);
+  }
+  function submitOrder(){
+    const i=+selEl.value, qty=Math.max(1,parseInt(document.getElementById('oQty').value)||1), total=orderTotal();
+    const name=document.getElementById('oName').value.trim(), phone=document.getElementById('oPhone').value.trim(), addr=document.getElementById('oAddr').value.trim();
+    if(!name){ document.getElementById('oName').focus(); return; }
+    if(!phone){ document.getElementById('oPhone').focus(); return; }
+    logOrder({ref:curRef, product:PRODUCTS[i].name, qty:qty, name:name, phone:phone, address:addr, amount:total.toFixed(2)});
+    const msg = "New order "+curRef+"\n"+PRODUCTS[i].name+" \u00D7"+qty+"\nTotal: S$"+total.toFixed(2)
+              + "\nName: "+name+"\nPhone: "+phone+"\nAddress: "+(addr||"(to confirm)")
+              + "\n\nI've PayNow-ed and will attach the screenshot.";
+    window.open("https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(msg),"_blank");
+  }
+  document.getElementById('orderModal').addEventListener('click',e=>{ if(e.target.id==='orderModal') closeOrder(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeOrder(); });
+</script>
+
+<script>
+  // Use cases pulled from the ETL No.9 General Cleaning chart (duplicates merged)
+  const CATS = [
+    {id:'general', label:'General Cleaning'},
+    {id:'food',    label:'Food Cleaning'},
+    {id:'garden',  label:'Gardening'},
+  ];
+  const UC = {
+    general:[
+      {n:"Air Conditioner", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray on the air-con nets, rinse with clean water","Wipe dry with a dry cloth"]},
+      {n:"Toilet & Urinal Bowl", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray all over the bowl and scrub the stains","Soak 2 mins, then brush off with water"]},
+      {n:"Kitchen Hood & Stove", r:"1:5–1:7", s:["Dilute 1:5 to 1:7 into a spray bottle","Spray onto the sponge","Scrub the hood and stove, wipe dry with water"]},
+      {n:"Kitchen Utensils", r:"1:5–1:7", s:["Dilute 1:5 to 1:7 into a spray bottle","Spray onto the sponge","Scrub utensils, cutlery & dishes, then rinse"]},
+      {n:"Carpets", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray on the carpet, leave 3 minutes","Vacuum dry"]},
+      {n:"Mopping Floors", r:"1 pump / ½ bucket", s:["Add 1 pump of concentrate to half a bucket of clean water","Mix well","Start mopping"]},
+      {n:"Glass, Windows & Handles", r:"1:30", s:["Dilute 1:30 into a spray bottle","Spray on glass doors, windows and handles","Wipe clean with a semi-damp cloth"]},
+      {n:"Furniture", r:"1:20", s:["Dilute 1:20 into a spray bottle","Spray onto a damp cloth and wipe the furniture","Wipe dry with a dry cloth"]},
+      {n:"Hand-wash Clothes", r:"10ml / kg", s:["Add water and clothes to a container","Use 10ml of concentrate per 1kg of clothes","Dab concentrate on stains, scrub, then rinse"]},
+      {n:"Shoes & Socks", r:"1:7", s:["Soak shoes/socks in a container of water","Dilute 1:7 into a spray bottle","Dab concentrate on dirt, scrub, then rinse"]},
+      {n:"Laundry (Machine)", r:"10ml / kg", s:["Load laundry into the washing machine","Use 10ml of concentrate per 1kg of laundry","Run the machine"]},
+      {n:"Silver, Gold & Steel Jewellery", r:"1:7", s:["Dilute 1:7 into a spray bottle","Place jewellery into a container","Spray, gently scrub with a toothbrush, then rinse"]},
+      {n:"Dog Shower", r:"1:7", s:["Rinse the dog's fur with warm water","Spray diluted 1:7 (or 1 pump) onto the fur","Rinse off thoroughly and blow dry"]},
+      {n:"Air Purifier / Fan", r:"1:30", s:["Dilute 1:30 into a spray bottle","Aim at the fan or air-con outlet","Spray directly and let the air circulate"]},
+      {n:"Mosquitoes, Roaches & Ants", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray directly at the pests","Hit corners — under beds, sofas, tables, sink pipes & toilet"]},
+    ],
+    food:[
+      {n:"Vegetables, Meats & Seafood", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray onto vegetables to lift pesticide residue, or onto meats & seafood to cut odours","Rinse off after 1 minute"]},
+      {n:"Fruits", r:"1:7", s:["Dilute 1:7 into a spray bottle","Spray onto the fruit, add a little water, then toss & turn to lift pesticide residue","Rinse off after 1 minute"]},
+    ],
+    garden:[
+      {n:"Soil", r:"1:500–1:1000", s:["Dilute 1:500 to 1:1000 into a pressure sprayer","Spray the plants and soil","Spray flowers and plants daily (adjust to the plant's habit)"]},
+      {n:"Farming", r:"1:500–1:1000", s:["Dilute 1:500 to 1:1000 into a pressure sprayer","Spray the plants and soil","Spray flowers and plants daily (adjust to the plant's habit)"]},
+    ]
+  };
+
+  let cat = 'general', q = '';
+  const tabsEl = document.getElementById('ucTabs');
+  const gridEl = document.getElementById('ucGrid');
+  const searchEl = document.getElementById('ucSearch');
+  document.getElementById('jobTotal').textContent = UC.general.length;
+
+  CATS.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='uc-tab'+(c.id===cat?' active':'');
+    b.innerHTML=c.label+(c.soon?' <span class="soon">SOON</span>':'');
+    b.onclick=()=>{cat=c.id;render();document.querySelectorAll('.uc-tab').forEach((t,i)=>t.classList.toggle('active',CATS[i].id===cat));};
+    tabsEl.appendChild(b);
+  });
+
+  function render(){
+    const items=(UC[cat]||[]).filter(u=>{
+      if(!q) return true;
+      const hay=(u.n+' '+u.s.join(' ')).toLowerCase();
+      return hay.includes(q);
+    });
+    document.getElementById('ucCount').textContent = items.length+' / '+(UC[cat]||[]).length+' jobs';
+    if((UC[cat]||[]).length===0){
+      gridEl.innerHTML='<div class="uc-empty">// '+CATS.find(c=>c.id===cat).label+' guide coming soon<br>send me the chart and these cards fill themselves in</div>';
+      return;
+    }
+    if(items.length===0){
+      gridEl.innerHTML='<div class="uc-empty">// nothing matches &ldquo;'+q+'&rdquo;<br>try &ldquo;floor&rdquo;, &ldquo;dog&rdquo;, &ldquo;stove&rdquo; or clear the search</div>';
+      return;
+    }
+    gridEl.innerHTML=items.map((u,i)=>(
+      '<div class="uc-card" style="animation-delay:'+(i*0.03)+'s">'+
+        '<div class="uc-top"><h3>'+u.n+'</h3><span class="uc-ratio">'+u.r+'</span></div>'+
+        '<ol>'+u.s.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+
+      '</div>'
+    )).join('');
+  }
+  searchEl.addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();render();});
+  render();
+</script>
+</body>
+</html>
